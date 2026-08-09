@@ -100,28 +100,62 @@ export const AuthService = {
   },
 
   async googleAuth(email: string, username: string) {
-    const targetEmail = email && email.includes('@') ? email : 'google.demo.user@gmail.com';
-    let user = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, targetEmail))
-      .get();
-
-    if (!user) {
-      const hashedPassword = await bcrypt.hash('GoogleOAuthSecret123!', 10);
-      user = await db
-        .insert(users)
-        .values({
-          email: targetEmail,
-          username: (username || 'Google_User').replace(/\s+/g, '_') + '_' + Math.floor(Math.random() * 1000),
-          password: hashedPassword,
-        })
-        .returning()
+    try {
+      const targetEmail = email && email.includes('@') ? email.trim().toLowerCase() : 'google.demo.user@gmail.com';
+      let user = await db
+        .select()
+        .from(users)
+        .where(eq(users.email, targetEmail))
         .get();
-    }
 
-    const token = generateToken(user.id);
-    return { user: sanitizeUser(user), token };
+      if (!user) {
+        const hashedPassword = await bcrypt.hash('GoogleOAuthSecret123!', 10);
+        // Clean and prepare the username base (remove invalid characters)
+        const baseName = (username || email.split('@')[0] || 'Google_User')
+          .replace(/[^a-zA-Z0-9_-]/g, '_')
+          .trim();
+
+        // Attempt insertion, resolving username collisions dynamically
+        let inserted = false;
+        let attempts = 0;
+        while (!inserted && attempts < 10) {
+          try {
+            const suffix = attempts === 0 ? '' : `_${Math.floor(Math.random() * 10000)}`;
+            const finalUsername = `${baseName}${suffix}`.substring(0, 50);
+            
+            user = await db
+              .insert(users)
+              .values({
+                email: targetEmail,
+                username: finalUsername,
+                password: hashedPassword,
+              })
+              .returning()
+              .get();
+            inserted = true;
+          } catch (insertErr: any) {
+            attempts++;
+            if (attempts >= 10 || !insertErr.message?.includes('UNIQUE')) {
+              throw insertErr;
+            }
+          }
+        }
+      }
+
+      if (!user) {
+        throw new ApiError(500, 'Failed to authenticate user record via Google', 'GOOGLE_AUTH_FAILED');
+      }
+
+      const token = generateToken(user.id);
+      return { user: sanitizeUser(user), token };
+    } catch (err: any) {
+      if (err instanceof ApiError) throw err;
+      logger.error('Google Auth database error:', {
+        error: err.message,
+        stack: err.stack,
+      });
+      throw new ApiError(500, `Google Sign In failed: ${err.message}`, 'GOOGLE_AUTH_ERROR');
+    }
   },
 
   async getMe(userId: number) {
