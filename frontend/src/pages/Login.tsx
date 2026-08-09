@@ -3,12 +3,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Lock, LogIn, Gamepad2, AlertCircle, ArrowLeft } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
+import GoogleAuthModal from '../components/GoogleAuthModal';
 
 export default function Login() {
   const navigate = useNavigate();
   const { login, loginWithGoogle, isLoading, error, clearError } = useAuthStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,9 +24,13 @@ export default function Login() {
     }
   };
 
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSignInClick = () => {
     clearError();
-    const success = await loginWithGoogle();
+    setIsGoogleModalOpen(true);
+  };
+
+  const handleSelectGoogleAccount = async (selectedEmail: string, selectedName: string) => {
+    const success = await loginWithGoogle(selectedEmail, selectedName);
     if (success) {
       navigate('/dashboard');
     }
@@ -71,9 +77,9 @@ export default function Login() {
           {/* Google Sign In Button */}
           <button
             type="button"
-            onClick={handleGoogleSignIn}
+            onClick={handleGoogleSignInClick}
             disabled={isLoading}
-            className="w-full py-3 px-4 rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-800 text-xs font-bold flex items-center justify-center gap-3 transition-all shadow-xs hover:border-slate-300"
+            className="w-full py-3 px-4 rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-800 text-xs font-bold flex items-center justify-center gap-3 transition-all shadow-xs hover:border-slate-300 cursor-pointer"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24">
               <path
@@ -146,7 +152,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-lg shadow-rose-500/25 flex items-center justify-center gap-2 hover:-translate-y-0.5 transition-all"
+              className="w-full py-3 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-lg shadow-rose-500/25 flex items-center justify-center gap-2 hover:-translate-y-0.5 transition-all cursor-pointer"
             >
               {isLoading ? (
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -168,6 +174,13 @@ export default function Login() {
           </p>
         </div>
       </motion.div>
+
+      {/* Interactive Google Sign In Modal */}
+      <GoogleAuthModal
+        isOpen={isGoogleModalOpen}
+        onClose={() => setIsGoogleModalOpen(false)}
+        onSelectAccount={handleSelectGoogleAccount}
+      />
     </div>
   );
 }

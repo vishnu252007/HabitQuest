@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Lock, User, UserPlus, Gamepad2, AlertCircle, ArrowLeft } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
+import GoogleAuthModal from '../components/GoogleAuthModal';
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ export default function Signup() {
     confirmPassword: '',
   });
   const [localError, setLocalError] = useState('');
+  const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,9 +43,13 @@ export default function Signup() {
     }
   };
 
-  const handleGoogleSignUp = async () => {
+  const handleGoogleSignUpClick = () => {
     clearError();
-    const success = await loginWithGoogle();
+    setIsGoogleModalOpen(true);
+  };
+
+  const handleSelectGoogleAccount = async (selectedEmail: string, selectedName: string) => {
+    const success = await loginWithGoogle(selectedEmail, selectedName);
     if (success) {
       navigate('/dashboard');
     }
@@ -92,9 +98,9 @@ export default function Signup() {
           {/* Google Sign Up Button */}
           <button
             type="button"
-            onClick={handleGoogleSignUp}
+            onClick={handleGoogleSignUpClick}
             disabled={isLoading}
-            className="w-full py-3 px-4 rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-800 text-xs font-bold flex items-center justify-center gap-3 transition-all shadow-xs hover:border-slate-300"
+            className="w-full py-3 px-4 rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-800 text-xs font-bold flex items-center justify-center gap-3 transition-all shadow-xs hover:border-slate-300 cursor-pointer"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24">
               <path
@@ -114,25 +120,40 @@ export default function Signup() {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
               />
             </svg>
-            <span>Sign Up with Google</span>
+            <span>Continue with Google</span>
           </button>
 
           {/* Divider */}
           <div className="relative flex items-center justify-center">
             <div className="border-t border-slate-200 w-full" />
             <span className="bg-white px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider relative">
-              Or Register with Email
+              Or Sign Up with Email
             </span>
           </div>
 
           {/* Email/Password Form */}
-          <form onSubmit={handleSubmit} className="space-y-3.5">
+          <form onSubmit={handleSubmit} className="space-y-4">
             {displayError && (
               <div className="flex items-center gap-2 p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
                 <span>{displayError}</span>
               </div>
             )}
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Username</label>
+              <div className="relative">
+                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input
+                  type="text"
+                  value={form.username}
+                  onChange={(e) => setForm({ ...form, username: e.target.value })}
+                  placeholder="johndoe"
+                  className="w-full bg-slate-50/50 border border-slate-200 rounded-2xl py-2.5 pl-10 pr-4 text-xs font-medium text-slate-900 focus:outline-none focus:border-rose-500 focus:bg-white focus:ring-1 focus:ring-rose-500 transition-all"
+                  required
+                />
+              </div>
+            </div>
 
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">Email Address</label>
@@ -143,21 +164,6 @@ export default function Signup() {
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                   placeholder="you@example.com"
-                  className="w-full bg-slate-50/50 border border-slate-200 rounded-2xl py-2.5 pl-10 pr-4 text-xs font-medium text-slate-900 focus:outline-none focus:border-rose-500 focus:bg-white focus:ring-1 focus:ring-rose-500 transition-all"
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Username</label>
-              <div className="relative">
-                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input
-                  type="text"
-                  value={form.username}
-                  onChange={(e) => setForm({ ...form, username: e.target.value })}
-                  placeholder="your_username"
                   className="w-full bg-slate-50/50 border border-slate-200 rounded-2xl py-2.5 pl-10 pr-4 text-xs font-medium text-slate-900 focus:outline-none focus:border-rose-500 focus:bg-white focus:ring-1 focus:ring-rose-500 transition-all"
                   required
                 />
@@ -197,7 +203,7 @@ export default function Signup() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-lg shadow-rose-500/25 flex items-center justify-center gap-2 hover:-translate-y-0.5 transition-all mt-2"
+              className="w-full py-3 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-lg shadow-rose-500/25 flex items-center justify-center gap-2 hover:-translate-y-0.5 transition-all mt-2 cursor-pointer"
             >
               {isLoading ? (
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -219,6 +225,13 @@ export default function Signup() {
           </p>
         </div>
       </motion.div>
+
+      {/* Interactive Google Sign Up Modal */}
+      <GoogleAuthModal
+        isOpen={isGoogleModalOpen}
+        onClose={() => setIsGoogleModalOpen(false)}
+        onSelectAccount={handleSelectGoogleAccount}
+      />
     </div>
   );
 }
