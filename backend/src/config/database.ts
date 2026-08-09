@@ -17,13 +17,23 @@ export function getDb(): LibSQLDatabase<typeof schema> {
 export async function initializeDatabase(): Promise<void> {
   logger.info('🗄️  Initializing database...');
 
+  let dbUrl = env.DATABASE_URL;
+
+  // On Vercel, if DATABASE_URL is a local file, force it to /tmp to make it writeable
+  if (process.env.VERCEL === '1') {
+    if (!dbUrl.startsWith('libsql:') && !dbUrl.startsWith('http:') && !dbUrl.startsWith('https:')) {
+      logger.info('Running on Vercel serverless. Redirecting local SQLite database to /tmp/habit-tracker.db');
+      dbUrl = 'file:/tmp/habit-tracker.db';
+    }
+  }
+
   const url =
-    env.DATABASE_URL.startsWith('file:') ||
-    env.DATABASE_URL.startsWith('libsql:') ||
-    env.DATABASE_URL.startsWith('http:') ||
-    env.DATABASE_URL.startsWith('https:')
-      ? env.DATABASE_URL
-      : `file:${env.DATABASE_URL}`;
+    dbUrl.startsWith('file:') ||
+    dbUrl.startsWith('libsql:') ||
+    dbUrl.startsWith('http:') ||
+    dbUrl.startsWith('https:')
+      ? dbUrl
+      : `file:${dbUrl}`;
 
   const client: Client = createClient({ url });
 
@@ -32,7 +42,7 @@ export async function initializeDatabase(): Promise<void> {
 
   _db = drizzle(client, { schema });
 
-  logger.info(`✅ Database ready at: ${env.DATABASE_URL}`);
+  logger.info(`✅ Database ready at: ${dbUrl}`);
 }
 
 // Proxy so db.select() works naturally across all services
