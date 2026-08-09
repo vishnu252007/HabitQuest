@@ -6,6 +6,7 @@ import { users } from '../db/schema';
 import { env } from '../config/env';
 import { ApiError } from '../middleware/errorHandler';
 import { SignupInput, LoginInput } from '../utils/validators';
+import { logger } from '../config/logger';
 
 function generateToken(userId: number): string {
   return jwt.sign({ userId }, env.JWT_SECRET, {
@@ -42,38 +43,60 @@ export const AuthService = {
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
-    const result = await db
-      .insert(users)
-      .values({
-        email: data.email,
-        username: data.username,
-        password: hashedPassword,
-      })
-      .returning()
-      .get();
+    try {
+      const result = await db
+        .insert(users)
+        .values({
+          email: data.email,
+          username: data.username,
+          password: hashedPassword,
+        })
+        .returning()
+        .get();
 
-    const token = generateToken(result.id);
-    return { user: sanitizeUser(result), token };
+      if (!result) {
+        throw new ApiError(500, 'Failed to create user record', 'SIGNUP_FAILED');
+      }
+
+      const token = generateToken(result.id);
+      return { user: sanitizeUser(result), token };
+    } catch (err: any) {
+      if (err instanceof ApiError) throw err;
+      logger.error('Signup database insertion error:', {
+        error: err.message,
+        stack: err.stack,
+      });
+      throw new ApiError(500, `Signup failed: ${err.message}`, 'SIGNUP_ERROR');
+    }
   },
 
   async login(data: LoginInput) {
-    const user = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, data.email))
-      .get();
+    try {
+      const user = await db
+        .select()
+        .from(users)
+        .where(eq(users.email, data.email))
+        .get();
 
-    if (!user) {
-      throw new ApiError(401, 'Invalid email or password', 'INVALID_CREDENTIALS');
+      if (!user) {
+        throw new ApiError(401, 'Invalid email or password', 'INVALID_CREDENTIALS');
+      }
+
+      const passwordMatch = await bcrypt.compare(data.password, user.password);
+      if (!passwordMatch) {
+        throw new ApiError(401, 'Invalid email or password', 'INVALID_CREDENTIALS');
+      }
+
+      const token = generateToken(user.id);
+      return { user: sanitizeUser(user), token };
+    } catch (err: any) {
+      if (err instanceof ApiError) throw err;
+      logger.error('Login database error:', {
+        error: err.message,
+        stack: err.stack,
+      });
+      throw new ApiError(500, `Login failed: ${err.message}`, 'LOGIN_ERROR');
     }
-
-    const passwordMatch = await bcrypt.compare(data.password, user.password);
-    if (!passwordMatch) {
-      throw new ApiError(401, 'Invalid email or password', 'INVALID_CREDENTIALS');
-    }
-
-    const token = generateToken(user.id);
-    return { user: sanitizeUser(user), token };
   },
 
   async googleAuth(email: string, username: string) {
