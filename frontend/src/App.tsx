@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import Stats from './pages/Stats';
 import Achievements from './pages/Achievements';
 import Goals from './pages/Goals';
+import VoiceAgentWidget from './components/VoiceAgentWidget';
 
 // Context for global filter state between Sidebar and Pages
 interface FilterContextType {
@@ -52,7 +53,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   const { selectedCategory, setSelectedCategory } = useFilters();
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#f8fafc] text-slate-800">
+    <div className="flex h-screen w-screen overflow-hidden bg-[#f8fafc] text-slate-800 relative">
       {/* Left Sidebar */}
       <Sidebar
         selectedCategory={selectedCategory}
@@ -60,12 +61,15 @@ function AppLayout({ children }: { children: React.ReactNode }) {
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden bg-[#f8fafc]">
+      <div className="flex-1 flex flex-col h-screen overflow-hidden bg-[#f8fafc] relative">
         {/* Scrollable page body */}
         <main className="flex-1 overflow-y-auto p-6">
           {children}
         </main>
       </div>
+
+      {/* Global QuestAI Hands-free Voice Assistant FAB */}
+      <VoiceAgentWidget />
     </div>
   );
 }

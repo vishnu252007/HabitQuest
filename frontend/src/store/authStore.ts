@@ -16,6 +16,17 @@ interface User {
   totalAchievements?: number;
 }
 
+const getErrorMessage = (err: any, fallback: string): string => {
+  const data = err.response?.data;
+  if (!data) return fallback;
+  if (typeof data.error === 'string') return data.error;
+  if (data.error && typeof data.error === 'object' && typeof data.error.message === 'string') {
+    return data.error.message;
+  }
+  if (typeof data.message === 'string') return data.message;
+  return fallback;
+};
+
 interface AuthState {
   user: User | null;
   token: string | null;
@@ -33,10 +44,10 @@ interface AuthState {
 
 const storedToken = localStorage.getItem('habit_tracker_token');
 
-export const useAuthStore = create<AuthState>((set, get) => ({
+export const useAuthStore = create<AuthState>()((set, get) => ({
   user: null,
   token: storedToken,
-  isAuthenticated: false,
+  isAuthenticated: !!storedToken,
   isLoading: false,
   error: null,
 
@@ -50,8 +61,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ user, token, isAuthenticated: true, isLoading: false, error: null });
       return true;
     } catch (err: any) {
-      const message =
-        err.response?.data?.error ?? 'Invalid email or password';
+      const message = getErrorMessage(err, 'Invalid email or password');
       set({ isLoading: false, error: message });
       return false;
     }
@@ -67,7 +77,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ user, token, isAuthenticated: true, isLoading: false, error: null });
       return true;
     } catch (err: any) {
-      const message = err.response?.data?.error ?? 'Signup failed. Please try again.';
+      const message = getErrorMessage(err, 'Signup failed. Please try again.');
       set({ isLoading: false, error: message });
       return false;
     }
@@ -86,7 +96,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ user, token, isAuthenticated: true, isLoading: false, error: null });
       return true;
     } catch (err: any) {
-      const message = err.response?.data?.error ?? 'Google authentication failed';
+      const message = getErrorMessage(err, 'Google authentication failed');
       set({ isLoading: false, error: message });
       return false;
     }
@@ -111,6 +121,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   clearError: () => set({ error: null }),
 }));
 
+// Initialize token from localStorage
 const store = useAuthStore.getState();
 if (storedToken) {
   store.refreshUser();

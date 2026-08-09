@@ -1,12 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, UserPlus, Shield, CheckCircle, ArrowRight } from 'lucide-react';
-
-interface GoogleAccount {
-  name: string;
-  email: string;
-  avatar: string;
-}
+import { X, Shield, CheckCircle, ArrowRight, Mail, User } from 'lucide-react';
 
 interface GoogleAuthModalProps {
   isOpen: boolean;
@@ -14,49 +8,37 @@ interface GoogleAuthModalProps {
   onSelectAccount: (email: string, name: string) => void;
 }
 
-const SAVED_ACCOUNTS: GoogleAccount[] = [
-  {
-    name: 'Vishnu Kumar',
-    email: 'vishnu252007@gmail.com',
-    avatar: 'V',
-  },
-  {
-    name: 'Alex Gamer',
-    email: 'alex.habitquest@gmail.com',
-    avatar: 'A',
-  },
-];
-
 export default function GoogleAuthModal({
   isOpen,
   onClose,
   onSelectAccount,
 }: GoogleAuthModalProps) {
-  const [showCustomInput, setShowCustomInput] = useState(false);
-  const [customEmail, setCustomEmail] = useState('');
-  const [customName, setCustomName] = useState('');
+  const [googleEmail, setGoogleEmail] = useState('');
+  const [googleName, setGoogleName] = useState('');
   const [isAuthenticating, setIsAuthenticating] = useState(false);
-  const [selectedAccountEmail, setSelectedAccountEmail] = useState<string | null>(null);
+  const [authenticatingEmail, setAuthenticatingEmail] = useState('');
 
   if (!isOpen) return null;
 
-  const handleSelect = (email: string, name: string) => {
-    setSelectedAccountEmail(email);
+  const handleSignIn = (email: string, name?: string) => {
+    if (!email) return;
+
+    setAuthenticatingEmail(email);
     setIsAuthenticating(true);
 
+    const displayName = name || email.split('@')[0].replace(/[^a-zA-Z0-9]/g, ' ').trim();
+
     setTimeout(() => {
-      onSelectAccount(email, name);
+      onSelectAccount(email, displayName);
       setIsAuthenticating(false);
       onClose();
-    }, 1200);
+    }, 1000);
   };
 
-  const handleCustomSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!customEmail) return;
-
-    const inferredName = customName || customEmail.split('@')[0].replace('.', ' ');
-    handleSelect(customEmail, inferredName);
+    if (!googleEmail) return;
+    handleSignIn(googleEmail, googleName);
   };
 
   return (
@@ -68,8 +50,8 @@ export default function GoogleAuthModal({
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
           className="bg-white w-full max-w-md rounded-3xl border border-slate-200 shadow-2xl overflow-hidden relative"
         >
-          {/* Top Header */}
-          <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+          {/* Header Bar */}
+          <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
             <div className="flex items-center gap-3">
               <svg className="w-6 h-6" viewBox="0 0 24 24">
                 <path
@@ -98,119 +80,71 @@ export default function GoogleAuthModal({
             <button
               onClick={onClose}
               disabled={isAuthenticating}
-              className="w-8 h-8 rounded-full bg-slate-100 text-slate-400 hover:text-slate-600 hover:bg-slate-200 flex items-center justify-center transition-all"
+              className="w-8 h-8 rounded-full bg-slate-100 text-slate-400 hover:text-slate-600 hover:bg-slate-200 flex items-center justify-center transition-all cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
 
           {/* Loading State Overlay */}
-          {isAuthenticating && (
+          {isAuthenticating ? (
             <div className="p-8 text-center space-y-4 bg-white">
               <div className="w-12 h-12 rounded-full border-4 border-rose-500 border-t-transparent animate-spin mx-auto" />
               <div>
-                <h4 className="text-sm font-bold text-slate-900">Authenticating with Google...</h4>
-                <p className="text-xs text-slate-500 font-medium mt-1">{selectedAccountEmail}</p>
+                <h4 className="text-sm font-bold text-slate-900">Connecting to Google Account...</h4>
+                <p className="text-xs text-slate-500 font-medium mt-1">{authenticatingEmail}</p>
               </div>
               <div className="flex items-center justify-center gap-1.5 text-[11px] text-emerald-600 font-bold bg-emerald-50 py-1.5 px-3 rounded-full w-fit mx-auto">
                 <CheckCircle className="w-3.5 h-3.5" />
-                <span>OAuth 2.0 Token Verified</span>
+                <span>Google OAuth 2.0 Verified</span>
               </div>
             </div>
-          )}
-
-          {/* Account Selection */}
-          {!isAuthenticating && (
+          ) : (
+            /* Google Sign In Form */
             <div className="p-6 space-y-5">
-              {!showCustomInput ? (
-                <>
-                  <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-                      Choose an Account
-                    </span>
-
-                    <div className="divide-y divide-slate-100 rounded-2xl border border-slate-200 overflow-hidden">
-                      {SAVED_ACCOUNTS.map((acc) => (
-                        <button
-                          key={acc.email}
-                          onClick={() => handleSelect(acc.email, acc.name)}
-                          className="w-full p-3.5 flex items-center justify-between hover:bg-slate-50 transition-colors text-left"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-slate-800 text-white font-bold flex items-center justify-center text-sm shadow-xs">
-                              {acc.avatar}
-                            </div>
-                            <div>
-                              <div className="text-xs font-bold text-slate-900">{acc.name}</div>
-                              <div className="text-[11px] text-slate-500 font-medium">{acc.email}</div>
-                            </div>
-                          </div>
-                          <ArrowRight className="w-4 h-4 text-slate-300" />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => setShowCustomInput(true)}
-                    className="w-full py-3 px-4 rounded-2xl border border-dashed border-slate-300 hover:border-slate-400 hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center justify-center gap-2 transition-all"
-                  >
-                    <UserPlus className="w-4 h-4 text-slate-500" />
-                    <span>Use another Google account</span>
-                  </button>
-                </>
-              ) : (
-                /* Custom Google Account Form */
-                <form onSubmit={handleCustomSubmit} className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                      Enter Google Credentials
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setShowCustomInput(false)}
-                      className="text-xs font-bold text-rose-600 hover:underline"
-                    >
-                      ← Back to saved
-                    </button>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Google Email Address
-                    </label>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold text-slate-700">
+                    Google Email Address
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                       type="email"
                       required
-                      value={customEmail}
-                      onChange={(e) => setCustomEmail(e.target.value)}
+                      value={googleEmail}
+                      onChange={(e) => setGoogleEmail(e.target.value)}
                       placeholder="your.email@gmail.com"
-                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-2.5 px-3.5 text-xs font-medium text-slate-900 focus:outline-none focus:border-rose-500 focus:bg-white"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-2.5 pl-10 pr-4 text-xs font-medium text-slate-900 focus:outline-none focus:border-rose-500 focus:bg-white focus:ring-1 focus:ring-rose-500 transition-all"
+                      autoFocus
                     />
                   </div>
+                </div>
 
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Display Name (Optional)
-                    </label>
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold text-slate-700">
+                    Your Name (Optional)
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                       type="text"
-                      value={customName}
-                      onChange={(e) => setCustomName(e.target.value)}
-                      placeholder="Your Name"
-                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-2.5 px-3.5 text-xs font-medium text-slate-900 focus:outline-none focus:border-rose-500 focus:bg-white"
+                      value={googleName}
+                      onChange={(e) => setGoogleName(e.target.value)}
+                      placeholder="e.g. Vishnu"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-2.5 pl-10 pr-4 text-xs font-medium text-slate-900 focus:outline-none focus:border-rose-500 focus:bg-white focus:ring-1 focus:ring-rose-500 transition-all"
                     />
                   </div>
+                </div>
 
-                  <button
-                    type="submit"
-                    className="w-full py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all shadow-md"
-                  >
-                    Continue with this Account
-                  </button>
-                </form>
-              )}
-
+                <button
+                  type="submit"
+                  className="w-full py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer mt-2"
+                >
+                  <span>Sign In with Google</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </form>
               {/* Privacy Footer */}
               <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400 font-medium">
                 <div className="flex items-center gap-1">
