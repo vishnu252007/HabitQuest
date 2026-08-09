@@ -1,0 +1,152 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== BASE STYLES ===== */
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: #f8fafc;
+    color: #334155;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #f1f5f9;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+
+  *:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+  }
+}
+
+/* ===== LIGHT MODE COMPONENTS ===== */
+@layer components {
+  /* Crisp Card (white with subtle border, no heavy dark shadows) */
+  .card-light {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02);
+  }
+
+  .card-light-hover {
+    @apply card-light;
+    transition: all 0.2s ease-in-out;
+  }
+
+  .card-light-hover:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  }
+
+  /* Sidebar nav item active pill */
+  .sidebar-active {
+    background-color: #2563eb;
+    color: #ffffff !important;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+
+  /* Primary Button */
+  .btn-primary {
+    @apply px-4 py-2.5 rounded-xl font-semibold text-white transition-all duration-200;
+    background-color: #2563eb;
+  }
+
+  .btn-primary:hover {
+    background-color: #1d4ed8;
+  }
+
+  .btn-primary:active {
+    background-color: #1e40af;
+  }
+
+  /* Secondary Button */
+  .btn-secondary {
+    @apply px-4 py-2.5 rounded-xl font-semibold text-slate-700 transition-all duration-200;
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+  }
+
+  .btn-secondary:hover {
+    background-color: #f8fafc;
+    border-color: #cbd5e1;
+  }
+
+  /* Clean Input */
+  .input-light {
+    @apply w-full px-3.5 py-2.5 rounded-xl text-slate-900 placeholder-slate-400 bg-white border border-slate-200 transition-all duration-200;
+  }
+
+  .input-light:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    outline: none;
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    @apply w-full h-2 rounded-full overflow-hidden bg-slate-100;
+  }
+
+  .progress-bar-fill {
+    @apply h-full rounded-full transition-all duration-500 ease-out bg-blue-600;
+  }
+
+  /* Checkbox custom */
+  .habit-checkbox {
+    @apply w-5 h-5 rounded-md cursor-pointer transition-all duration-200;
+    appearance: none;
+    -webkit-appearance: none;
+    background: #ffffff;
+    border: 2px solid #cbd5e1;
+  }
+
+  .habit-checkbox:checked {
+    background: #2563eb;
+    border-color: #2563eb;
+  }
+
+  .habit-checkbox:hover {
+    border-color: #2563eb;
+  }
+
+  /* Modal overlay */
+  .modal-overlay {
+    @apply fixed inset-0 z-50 flex items-center justify-center p-4;
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(4px);
+  }
+}
