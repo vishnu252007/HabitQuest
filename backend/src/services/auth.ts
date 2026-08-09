@@ -30,6 +30,16 @@ export const AuthService = {
       throw new ApiError(409, 'Email already registered', 'EMAIL_EXISTS');
     }
 
+    const existingUsername = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.username, data.username))
+      .get();
+
+    if (existingUsername) {
+      throw new ApiError(409, 'Username already taken', 'USERNAME_EXISTS');
+    }
+
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
     const result = await db
